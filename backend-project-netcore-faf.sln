@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33103.184
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "backend-project-netcore-faf", "backend-project-netcore-faf\backend-project-netcore-faf.csproj", "{BA1F5F3B-C84D-428E-84D4-489B21DFC20D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Modelos", "Modelos\Modelos.csproj", "{C6B320CD-18A2-41B5-85B0-F6CDF970E690}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BA1F5F3B-C84D-428E-84D4-489B21DFC20D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA1F5F3B-C84D-428E-84D4-489B21DFC20D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA1F5F3B-C84D-428E-84D4-489B21DFC20D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA1F5F3B-C84D-428E-84D4-489B21DFC20D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6B320CD-18A2-41B5-85B0-F6CDF970E690}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6B320CD-18A2-41B5-85B0-F6CDF970E690}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6B320CD-18A2-41B5-85B0-F6CDF970E690}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6B320CD-18A2-41B5-85B0-F6CDF970E690}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {549312A5-01C5-466D-BBA3-D0D6D5AE3485}
+	EndGlobalSection
+EndGlobal
