@@ -1,8 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
-using Modelos.Shared;
+﻿using Modelos.Shared;
 using System.Data;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using System.Xml.Linq;
 
 namespace Modelos.repo
@@ -10,95 +7,153 @@ namespace Modelos.repo
     public class ActaPartidoRepository
     {
         private readonly string connectionString;
-        public ActaPartidoRepository(string connectionString) {
+        public ActaPartidoRepository(string connectionString)
+        {
             this.connectionString = connectionString;
         }
 
         /**/
-        public async Task<IEnumerable<ActaPartido>> ListarActasPartido()
+        public async Task<List<ActaPartido>> ListarActasPartido(string type, string filtro)
         {
-            List<ActaPartido> listaNueva = new List<ActaPartido>();
+            List<ActaPartido>? listaNueva = null;
             string sp_name = StoreProceduresNames.AP_SP_CONS;
-            string transaccion = "CONSULTAR_ALL_ACTAS_PARTIDO";
+            //string transaccion = "CONSULTAR_ALL_ACTAS_PARTIDO";
+            string transaccion = type;
 
             // Obtencion del data set
-            DataSet dataSet = await DBXmlMethods.EjecutaBase(sp_name, this.connectionString, transaccion);
+            DataSet dataSet = await DBXmlMethods.EjecutaBase(sp_name, this.connectionString, transaccion, filtro);
 
-            using (DataTable table = dataSet.Tables[0])
+            if (dataSet.Tables[0].Rows.Count > 0)
             {
-                foreach (DataRow row in table.Rows)
+                listaNueva = new List<ActaPartido>();
+
+                using (DataTable table = dataSet.Tables[0])
                 {
-                    listaNueva.Add(
-                        new ActaPartido
-                        {
-                            Id = int.Parse(row["id_acta_partido"].ToString()),
-                            FechaEmision = DateTime.Parse(row["fecha_emision_acta"].ToString())
-                        }
-                        );
-                    ;
+                    foreach (DataRow row in table.Rows)
+                    {
+                        listaNueva.Add(
+
+                         new ActaPartido
+                         {
+                             Id = int.Parse((row["id_acta_partido"].ToString())),
+                             FechaEmision = DateTime.Parse(row["fecha_emision_acta"].ToString()),
+                             HoraInicio = row["hora_inicio_partido"].ToString(),
+                             HoraFin = row["hora_fin_partido"].ToString(),
+                             EquipoLocal = row["nombre_local"].ToString(),
+                             EquipoRival = row["nombre_rival"].ToString(),
+                             DuracionPartido = row["duracion_partido"].ToString(),
+                             NumGolEquipoLocal = int.Parse(row["num_gol_equipo_local"].ToString()),
+                             NumGolEquipoRival = int.Parse(row["num_gol_equipo_rival"].ToString())
+
+                         });
+
+                    }
                 }
             }
 
+            if (filtro != "")
+            {
+                //Console.WriteLine(filtro);
+                Console.WriteLine("Filtrando lista");
+                listaNueva = listaNueva.FindAll(a => a.EquipoRival.IndexOf(filtro) > -1);
 
+            }
             //return JsonConverter.SerializeObject( listaNueva);
-            return listaNueva;
+            return (listaNueva);
         }
 
 
         /**/
-        public async Task<string> CreateActaPartido(ActaPartido actaPartido)
+        public async Task<Respuesta> CreateActaPartido(ActaPartido actaPartido)
         {
             string sp_name = StoreProceduresNames.AP_SP_MANT;
             string transaccion = "CREAR_ACTA_PARTIDO";
-            string? mensaje = "";
+            Respuesta? res = new();
 
             XDocument xmlData = DBXmlMethods.GetXml(actaPartido);
             DataSet dataSet = await DBXmlMethods.EjecutaBase(sp_name, this.connectionString, transaccion, xmlData.ToString());
 
-            if (dataSet.Tables.Count > 0)
+            if (dataSet.Tables[0].Rows.Count > 0)
             {
-                mensaje = dataSet?.Tables[0]?.Rows[0]["ERROR"].ToString();
-                return mensaje;
+                res.Error = dataSet?.Tables[0]?.Rows[0]["ERROR"].ToString();
+                res.Response = dataSet?.Tables[0]?.Rows[0]["RESONSE"].ToString();
             }
 
-            return mensaje;
+            return res;
         }
 
         /* */
-        public async Task<string> UpdateActaPartido(ActaPartido actaPartido)
+        public async Task<Respuesta> UpdateActaPartido(ActaPartido actaPartido)
         {
             string sp_name = StoreProceduresNames.AP_SP_MANT;
             string transaccion = "ACTUALIZAR_ACTA_PARTIDO";
-            string? mensaje = "";
-            
-            XDocument xmlData = DBXmlMethods.GetXml(actaPartido);
-            DataSet dataSet =await DBXmlMethods.EjecutaBase(sp_name, this.connectionString, transaccion, xmlData.ToString());
-            if(dataSet.Tables.Count > 0)
-            {
-                mensaje = dataSet?.Tables[0]?.Rows[0]["ERROR"].ToString();
-                return mensaje;
-            }
-
-            return mensaje;
-
-        }
-
-        public async Task<string> DeleteActaPartido(ActaPartido actaPartido)
-        {
-            string sp_name = StoreProceduresNames.AP_SP_MANT;
-            string transaccion = "ELIMINAR_ACTA_PARTIDO";
-            string? mensaje = "";
+            Respuesta? res = new();
 
             XDocument xmlData = DBXmlMethods.GetXml(actaPartido);
             DataSet dataSet = await DBXmlMethods.EjecutaBase(sp_name, this.connectionString, transaccion, xmlData.ToString());
-            if (dataSet.Tables.Count > 0)
+
+            if (dataSet.Tables[0].Rows.Count > 0)
             {
-                mensaje = dataSet?.Tables[0]?.Rows[0]["ERROR"].ToString();
-                return mensaje;
+                res.Error = dataSet?.Tables[0]?.Rows[0]["ERROR"].ToString();
+                res.Response = dataSet?.Tables[0]?.Rows[0]["RESONSE"].ToString();
             }
 
-            return mensaje;
 
+            return res;
+
+        }
+
+        /**/
+        public async Task<Respuesta> DeleteActaPartido(ActaPartido actaPartido)
+        {
+            string sp_name = StoreProceduresNames.AP_SP_MANT;
+            string transaccion = "ELIMINAR_ACTA_PARTIDO";
+
+            Respuesta? res = new();
+
+            XDocument xmlData = DBXmlMethods.GetXml(actaPartido);
+            DataSet dataSet = await DBXmlMethods.EjecutaBase(sp_name, this.connectionString, transaccion, xmlData.ToString());
+
+            if (dataSet.Tables[0].Rows.Count > 0)
+            {
+                res.Error = dataSet?.Tables[0]?.Rows[0]["ERROR"].ToString();
+                res.Response = dataSet?.Tables[0]?.Rows[0]["RESONSE"].ToString();
+            }
+
+            return res;
+
+        }
+    
+        public async Task<ActaPartido> GetActaPartido(ActaPartido acta)
+        {
+            ActaPartido? actaPartido= null;
+            string transaccion = "CONSULTA_ACTA_PARTIDO";
+
+            XDocument dataXML = DBXmlMethods.GetXml(acta);
+            // Obtencion del data set
+            DataSet dataSet = await DBXmlMethods.EjecutaBase(StoreProceduresNames.AP_SP_CONS, this.connectionString, transaccion, dataXML.ToString());
+
+            if (dataSet.Tables[0].Rows.Count > 0)
+            {
+
+                using (DataTable table = dataSet.Tables[0])
+                {
+                    actaPartido = new ActaPartido
+                    {
+                        Id = int.Parse((table.Rows[0]["id_acta_partido"].ToString())),
+                        FechaEmision = DateTime.Parse(table.Rows[0]["fecha_emision_acta"].ToString()),
+                        HoraInicio = table.Rows[0]["hora_inicio_partido"].ToString(),
+                        HoraFin = table.Rows[0]["hora_fin_partido"].ToString(),
+                        EquipoLocal = table.Rows[0]["nombre_local"].ToString(),
+                        EquipoRival = table.Rows[0]["nombre_rival"].ToString(),
+                        DuracionPartido = table.Rows[0]["duracion_partido"].ToString(),
+                        NumGolEquipoLocal = int.Parse(table.Rows[0]["num_gol_equipo_local"].ToString()),
+                        NumGolEquipoRival = int.Parse(table.Rows[0]["num_gol_equipo_rival"].ToString())
+
+                    };
+                }
+            }
+            return actaPartido;
         }
     }
 }

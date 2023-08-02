@@ -4,22 +4,22 @@
     {
         private int id;
 
-        private string codActa = "";
+        private string? codActa = "";
 
         private DateTime fechaEmision;
 
-        private string horaInicio = "";
+        private string? horaInicio = "";
 
-        private string horaFin = "";
+        private string? horaFin = "";
 
-        private string equipoLocal = "";
-        private string equipoRival = "";
-        private string duracionPartido = "";
-        private int numGolEquipoLocal;
-        private int numGolEquipoRival;
-        private int totTarjetaAmarillas;
-        private int totTarjetaRojas;
-        private string equipoGanador = "";
+        private string? equipoLocal = "";
+        private string? equipoRival = "";
+        private string? duracionPartido = "";
+        private int? numGolEquipoLocal;
+        private int? numGolEquipoRival;
+        private int? totTarjetaAmarillas;
+        private int? totTarjetaRojas;
+        private string? equipoGanador = "";
 
 
         private int idPartido;
@@ -50,7 +50,7 @@
             set { id = value; }
         }
 
-        public string CodActa
+        public string? CodActa
         {
             get { return codActa; }
             set { codActa = value; }
@@ -62,7 +62,7 @@
             set { fechaEmision = value; }
         }
 
-        public string HoraInicio
+        public string? HoraInicio
         {
             get { return horaInicio; }
             set
@@ -71,7 +71,7 @@
             }
         }
 
-        public string HoraFin
+        public string? HoraFin
         {
             get { return horaFin; }
             set
@@ -80,14 +80,14 @@
             }
         }
 
-        public string EquipoLocal { get => equipoLocal; set => equipoLocal = value; }
-        public string EquipoRival { get => equipoRival; set => equipoRival = value; }
-        public string DuracionPartido { get => duracionPartido; set => duracionPartido = value; }
-        public int NumGolEquipoLocal { get => numGolEquipoLocal; set => numGolEquipoLocal = value; }
-        public int NumGolEquipoRival { get => numGolEquipoRival; set => numGolEquipoRival = value; }
-        public int TotTarjetaAmarillas { get => totTarjetaAmarillas; set => totTarjetaAmarillas = value; }
-        public int TotTarjetaRojas { get => totTarjetaRojas; set => totTarjetaRojas = value; }
-        public string EquipoGanador { get => equipoGanador; set => equipoGanador = value; }
+        public string? EquipoLocal { get => equipoLocal; set => equipoLocal = value; }
+        public string? EquipoRival { get => equipoRival; set => equipoRival = value; }
+        public string? DuracionPartido { get => duracionPartido; set => duracionPartido = value; }
+        public int? NumGolEquipoLocal { get => numGolEquipoLocal; set => numGolEquipoLocal = value; }
+        public int? NumGolEquipoRival { get => numGolEquipoRival; set => numGolEquipoRival = value; }
+        public int? TotTarjetaAmarillas { get => totTarjetaAmarillas; set => totTarjetaAmarillas = value; }
+        public int? TotTarjetaRojas { get => totTarjetaRojas; set => totTarjetaRojas = value; }
+        public string? EquipoGanador { get => equipoGanador; set => equipoGanador = value; }
 
         public int IdPartido
         {

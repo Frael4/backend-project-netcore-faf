@@ -2,12 +2,20 @@ USE [PROJECT_FAF_DAW]
 GO
 
 CREATE OR ALTER  PROCEDURE [dbo].[SP_CONSULTAR_ACTAS_PARTIDO]
-	@TRANSACCION varchar(100),
-	@DATAXML XML = null
+	@TRANSACCION VARCHAR(100),
+	@DATAXML XML = NULL,
+	@FILTRO VARCHAR(100) = NULL
 AS
 BEGIN
-
 	
+	DECLARE @ID_ACTA AS INT
+
+	IF @FILTRO = NULL
+	BEGIN
+		SET @FILTRO = ''
+	END
+	SELECT @ID_ACTA = ISNULL(ACTA.X.value('Id[1]','INT'), 0) FROM @DATAXML.nodes('/ActaPartido') as ACTA(X)
+
 	BEGIN TRY
 
 		IF UPPER(@TRANSACCION) = 'CONSULTAR_ALL_ACTAS_PARTIDO'
@@ -25,9 +33,7 @@ BEGIN
 
 		IF UPPER(@TRANSACCION) = 'CONSULTA_ACTA_PARTIDO'
 		BEGIN
-			DECLARE @ID_ACTA AS INT
-			SET @ID_ACTA = 1
-
+			
 			SELECT ac.id_acta_partido, ac.fecha_emision_acta, ac.hora_inicio_partido,
 			ac.hora_fin_partido, ac.duracion_partido, ac.num_gol_equipo_local, ac.num_gol_equipo_rival,
 			ac.partido_id_partido, l.id_club as id_club_l, l.nombre as nombre_local, r.id_club as id_club_r, r.nombre as nombre_rival,
@@ -39,6 +45,22 @@ BEGIN
 
 			SELECT 'OK' AS ERROR
 		END
+
+		/*IF UPPER(@TRANSACCION) = 'CONSULTA_ACTA_PARTIDO_POR'
+		BEGIN
+
+			SELECT ac.id_acta_partido, ac.fecha_emision_acta, ac.hora_inicio_partido,
+			ac.hora_fin_partido, ac.duracion_partido, ac.num_gol_equipo_local, ac.num_gol_equipo_rival,
+			ac.partido_id_partido, l.id_club as id_club_l, l.nombre AS NOMBRE_LOCAL, r.id_club as id_club_r, r.nombre AS NOMBRE_RIVAL,
+			ac.equipo_ganador FROM ACTA_PARTIDO ac 
+			inner join partido p on ac.partido_id_partido = p.id_partido
+			inner join club l on l.id_club = p.club_id_local
+			inner join club r on r.id_club = p.club_id_rival
+			WHERE L.NOMBRE LIKE '%'+TRIM(@FILTRO)+'%' OR R.NOMBRE LIKE '%'+TRIM(@FILTRO)+'%' OR ac.EQUIPO_GANADOR LIKE '%'+TRIM(@FILTRO)+'%'
+
+			SELECT 'OK' AS ERROR
+		END */
+
 	END TRY
 
 	BEGIN CATCH
