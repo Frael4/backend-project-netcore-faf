@@ -1,13 +1,26 @@
 USE [PROJECT_FAF_DAW]
 GO
-
+/**/
 CREATE OR ALTER  PROCEDURE [dbo].[SP_CONSULTAR_ACTAS_PARTIDO]
-	@TRANSACCION varchar(100),
-	@DATAXML XML = null
+	@TRANSACCION VARCHAR(100) = '',
+	@DATAXML XML = NULL,
+	@FILTRO VARCHAR(100) = NULL
 AS
 BEGIN
-
 	
+	DECLARE @ID_ACTA AS INT
+
+	IF @TRANSACCION = ''
+	BEGIN
+		SET @TRANSACCION = 'CONSULTAR_ALL_ACTAS_PARTIDO'
+	END
+
+	IF @FILTRO = NULL
+	BEGIN
+		SET @FILTRO = ''
+	END
+	SELECT @ID_ACTA = ISNULL(ACTA.X.value('Id[1]','INT'), 0) FROM @DATAXML.nodes('/ActaPartido') as ACTA(X)
+
 	BEGIN TRY
 
 		IF UPPER(@TRANSACCION) = 'CONSULTAR_ALL_ACTAS_PARTIDO'
@@ -15,9 +28,10 @@ BEGIN
 			SELECT ac.id_acta_partido, ac.fecha_emision_acta, ac.hora_inicio_partido,
 			ac.hora_fin_partido, ac.duracion_partido, ac.num_gol_equipo_local, ac.num_gol_equipo_rival,
 			ac.partido_id_partido, l.id_club as id_club_l, l.nombre as nombre_local, r.id_club as id_club_r, r.nombre as nombre_rival,
+			p.partido_descripcion,
 			ac.equipo_ganador FROM ACTA_PARTIDO ac inner join partido p on ac.partido_id_partido = p.id_partido
 			inner join club l on l.id_club = p.club_id_local
-			inner join club r on r.id_club = p.club_id_rival where ac.estado <> 'E'
+			inner join club r on r.id_club = p.club_id_rival where ac.estado <> 'E' and p.estado = 'A'
 
 			SELECT 'OK' AS ERROR
 
@@ -25,9 +39,7 @@ BEGIN
 
 		IF UPPER(@TRANSACCION) = 'CONSULTA_ACTA_PARTIDO'
 		BEGIN
-			DECLARE @ID_ACTA AS INT
-			SET @ID_ACTA = 1
-
+			
 			SELECT ac.id_acta_partido, ac.fecha_emision_acta, ac.hora_inicio_partido,
 			ac.hora_fin_partido, ac.duracion_partido, ac.num_gol_equipo_local, ac.num_gol_equipo_rival,
 			ac.partido_id_partido, l.id_club as id_club_l, l.nombre as nombre_local, r.id_club as id_club_r, r.nombre as nombre_rival,
@@ -39,6 +51,22 @@ BEGIN
 
 			SELECT 'OK' AS ERROR
 		END
+
+		/*IF UPPER(@TRANSACCION) = 'CONSULTA_ACTA_PARTIDO_POR'
+		BEGIN
+
+			SELECT ac.id_acta_partido, ac.fecha_emision_acta, ac.hora_inicio_partido,
+			ac.hora_fin_partido, ac.duracion_partido, ac.num_gol_equipo_local, ac.num_gol_equipo_rival,
+			ac.partido_id_partido, l.id_club as id_club_l, l.nombre AS NOMBRE_LOCAL, r.id_club as id_club_r, r.nombre AS NOMBRE_RIVAL,
+			ac.equipo_ganador FROM ACTA_PARTIDO ac 
+			inner join partido p on ac.partido_id_partido = p.id_partido
+			inner join club l on l.id_club = p.club_id_local
+			inner join club r on r.id_club = p.club_id_rival
+			WHERE L.NOMBRE LIKE '%'+TRIM(@FILTRO)+'%' OR R.NOMBRE LIKE '%'+TRIM(@FILTRO)+'%' OR ac.EQUIPO_GANADOR LIKE '%'+TRIM(@FILTRO)+'%'
+
+			SELECT 'OK' AS ERROR
+		END */
+
 	END TRY
 
 	BEGIN CATCH
@@ -48,7 +76,7 @@ BEGIN
 END
 GO
 
-
+/**/
 CREATE OR ALTER PROCEDURE [dbo].[SP_MAESTRO_ACTAS_PARTIDO]
 	@TRANSACCION NVARCHAR(50),
 	@DATAXML XML
@@ -102,7 +130,8 @@ BEGIN
 
 			IF @@ROWCOUNT > 0
 			BEGIN
-				SELECT 'OK' AS ERROR
+				UPDATE PARTIDO SET ESTADO = 'A' WHERE ID_PARTIDO = @PARTIDO_ID
+				SELECT 'OK' AS ERROR, 'INSERTADO CORRECTAMENTE' AS RESPONSE
 			END
 		END
 
@@ -129,7 +158,7 @@ BEGIN
 
 			IF @@ROWCOUNT > 0
 			BEGIN
-				SELECT 'Actualizado correctamente' AS ERROR
+				SELECT 'Actualizado correctamente' AS RESPONSE, 'OK' AS ERROR
 			END	
 			ELSE
 			BEGIN
@@ -146,7 +175,11 @@ BEGIN
 
 			IF @@ROWCOUNT > 0
 			BEGIN
-				SELECT 'Eliminado Correctamente' AS ERROR
+				SELECT 'Eliminado Correctamente' AS RESPONSE, 'OK' AS ERROR
+			END
+			ELSE
+			BEGIN
+				SELECT 'No se pudo eliminar acta' AS RESPONSE, 'ERROR' AS ERROR
 			END
 		END
 
@@ -156,8 +189,457 @@ BEGIN
 	BEGIN CATCH
 		ROLLBACK
 		--PRINT 'ERROR ES ' + ERROR_MESSAGE()
-		SELECT ERROR_MESSAGE() AS ERROR , ERROR_LINE() AS ERRO_LINEA
+		SELECT ERROR_MESSAGE() AS ERROR , ERROR_LINE() AS RESPONSE
 	END CATCH
 
 END
 GO
+
+/**/
+CREATE OR ALTER PROCEDURE SP_COMBO_PARTIDO
+	@TRANSACCION VARCHAR(100) = '',
+	@DATAXML XML = NULL
+AS
+BEGIN
+	IF @TRANSACCION = ''
+	BEGIN
+		SELECT * FROM PARTIDO WHERE ESTADO <> 'A'
+	END
+
+	IF @TRANSACCION = 'CON_ACTAS'
+	BEGIN
+		SELECT * FROM PARTIDO WHERE ESTADO = 'A'
+	END
+	
+END
+GO
+
+/**/
+CREATE OR ALTER  PROCEDURE [dbo].[SP_CONSULTAR_AGENDA_PARTIDO]
+	@TRANSACCION VARCHAR(100) = '',
+	@DATAXML XML = NULL
+AS
+BEGIN
+	
+	DECLARE @ID AS INT
+
+	IF @TRANSACCION = ''
+	BEGIN
+		SET @TRANSACCION = 'CONSULTAR_ALL_AGENDA_PARTIDO'
+	END
+
+	SELECT @ID = ISNULL(Agenda_.X.value('Id[1]','INT'), 0) FROM @DATAXML.nodes('/Agenda') as Agenda_(X)
+
+	BEGIN TRY
+
+		IF UPPER(@TRANSACCION) = 'CONSULTAR_ALL_AGENDA_PARTIDO'
+		BEGIN
+			SELECT a.id_agenda, a.partido_id_partido , a.fecha_partido, a.lugar_partido,
+			a.hora_partido, p.club_id_local, l.nombre as nombre_local, p.club_id_rival,
+			r.nombre as nombre_rival, a.estado
+			FROM agenda a
+			inner join partido p on a.partido_id_partido = p.id_partido
+			inner join club l on p.club_id_local = l.id_club
+			inner join club r on p.club_id_rival = r.id_club
+			WHERE a.ESTADO <> 'E';
+
+			SELECT 'OK' AS ERROR
+
+		END
+
+		IF UPPER(@TRANSACCION) = 'CONSULTA_AGENDA_PARTIDO'
+		BEGIN
+			
+			SELECT * FROM AGENDA WHERE id_agenda = @ID
+
+			SELECT 'OK' AS ERROR
+		END
+
+	END TRY
+
+	BEGIN CATCH
+		--SELECT 'ERROR EN CONSULTA'
+		SELECT ERROR_MESSAGE() AS ERROR
+	END CATCH
+END
+GO
+
+/**/
+CREATE OR ALTER PROCEDURE [dbo].[SP_MAESTRO_AGENDA_PARTIDO]
+	@TRANSACCION NVARCHAR(50) = '',
+	@DATAXML XML = NULL
+AS
+BEGIN
+	
+	DECLARE @ID INT
+	
+	DECLARE @FECHA_PARTIDO VARCHAR(100)
+	DECLARE @LUGAR_PARTIDO VARCHAR(100)
+	DECLARE @HORA_PARTIDO VARCHAR(100)
+
+	DECLARE @ID_LOCAL INT
+	DECLARE @ID_RIVAL INT
+	
+	DECLARE @ID_PARTIDO INT
+
+	DECLARE @NOMBRE_LOCAL VARCHAR(100)
+	DECLARE @NOMBRE_RIVAL VARCHAR(100)
+
+	SET NOCOUNT ON
+
+	BEGIN TRANSACTION
+	BEGIN TRY
+		
+	
+		SELECT @ID = ISNULL(AGENDA.X.value('Id[1]', 'INT'), 0),
+			@FECHA_PARTIDO = ISNULL(AGENDA.X.value('FechaPartido[1]', 'VARCHAR(100)'), ''),
+			@LUGAR_PARTIDO = ISNULL(AGENDA.X.value('Lugar[1]', 'VARCHAR(100)'), ''),
+			@HORA_PARTIDO = ISNULL(AGENDA.X.value('HoraPartido[1]', 'VARCHAR(100)'), ''),
+			@ID_PARTIDO = ISNULL(AGENDA.X.value('IdPartido[1]', 'INT'), 0)
+			
+			FROM @DATAXML.nodes('/Agenda') as AGENDA(X)
+
+		SELECT @ID_LOCAL = ISNULL(AGENDA.X.value('Id[1]', 'INT'),0) from @DATAXML.nodes('/Agenda/Partido/EquipoLocal') AS  AGENDA(X)
+		SELECT @ID_RIVAL = ISNULL(AGENDA.X.value('Id[1]', 'INT'),0) from @DATAXML.nodes('/Agenda/Partido/EquipoRival') AS  AGENDA(X)
+
+		SELECT @NOMBRE_LOCAL = nombre FROM club WHERE id_club = @ID_LOCAL
+		SELECT @NOMBRE_RIVAL = NOMBRE FROM club WHERE id_club = @ID_RIVAL
+
+		IF @TRANSACCION = 'CREAR_AGENDA_PARTIDO'
+		BEGIN
+			
+			INSERT INTO PARTIDO (CLUB_ID_LOCAL, club_id_rival, partido_descripcion, estado)
+			VALUES (@ID_LOCAL, @ID_RIVAL, CONCAT(@NOMBRE_LOCAL , ' VS ', @NOMBRE_RIVAL), 'S')
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				--SELECT 'OK' AS ERROR, 'Partido creado correctamente' AS RESPONSE
+				SELECT @ID_PARTIDO = MAX(ID_PARTIDO) FROM PARTIDO
+				--SELECT @ID_PARTIDO = SCOPE_IDENTITY()  -> ULTIMO IDENTITY AGREGADO
+
+				INSERT INTO AGENDA (FECHA_PARTIDO, LUGAR_PARTIDO, HORA_PARTIDO, PARTIDO_ID_PARTIDO, CREATE_AT, estado)
+
+				VALUES(@FECHA_PARTIDO, @LUGAR_PARTIDO, @HORA_PARTIDO, @ID_PARTIDO, GETDATE() ,'A')
+
+				IF @@ROWCOUNT > 0
+				BEGIN
+					SELECT 'OK' AS ERROR, 'Agenda creada correctamente' AS RESPONSE
+				END
+				ELSE
+				BEGIN
+					SELECT 'Error' AS ERROR, 'Error en crear agenda' AS RESPONSE
+				END
+			END
+			ELSE
+			BEGIN
+				SELECT 'ERROR' AS ERROR, 'Error creando partido ' + CAST(@ID_LOCAL as varchar) + ' r: ' + CAST(@ID_RIVAL AS varchar) AS RESPONSE
+			END
+
+		END
+
+		IF @TRANSACCION = 'ACTUALIZAR_AGENDA_PARTIDO'
+		BEGIN
+			
+			UPDATE agenda SET 
+			fecha_partido = @FECHA_PARTIDO,
+			lugar_partido = @LUGAR_PARTIDO,
+			hora_partido = @HORA_PARTIDO,
+			updated_at = GETDATE()
+			WHERE id_agenda = @ID
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				SELECT 'Actualizado correctamente' AS RESPONSE, 'OK' AS ERROR
+			END	
+			ELSE
+			BEGIN
+				SELECT 'ERROR, EN TRANSACCION AGENDA CON ID ' + CAST(@ID AS VARCHAR(5)) AS RESPONSE, 'ERROR' AS ERROR
+			END
+		END
+
+
+		IF @TRANSACCION = 'ELIMINAR_AGENDA_PARTIDO'
+		BEGIN
+			
+			PRINT @ID
+
+			UPDATE AGENDA SET ESTADO = 'E', delete_at = GETDATE() WHERE ID_AGENDA = @ID
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				SELECT 'Eliminado Correctamente' AS ERROR , '' AS RESPONSE
+			END
+		END
+
+		COMMIT
+	END TRY
+
+	BEGIN CATCH
+		ROLLBACK
+		--PRINT 'ERROR ES ' + ERROR_MESSAGE()
+		SELECT ERROR_MESSAGE() AS  RESPONSE, ERROR_LINE() AS ERROR
+	END CATCH
+	
+END
+GO
+
+/**/
+CREATE OR ALTER PROCEDURE [dbo].[SP_MAESTRO_PARTIDO]
+	@TRANSACCION NVARCHAR(50) = '',
+	@DATAXML XML = NULL
+AS
+BEGIN
+	DECLARE @ID INT
+	DECLARE @EQUIPO_LOCAL VARCHAR(100)
+	DECLARE @EQUIPO_RIVAL VARCHAR(100)
+	DECLARE @PARTIDO_DESC VARCHAR(100)
+	
+
+	SET NOCOUNT ON
+
+	BEGIN TRANSACTION
+	BEGIN TRY
+		
+		SELECT @ID = ISNULL(PARTIDO_.X.value('IdPartido[1]', 'INT'), 0),
+			@EQUIPO_LOCAL = ISNULL(PARTIDO_.X.value('EquipoLocal[1]', 'INT'), 0),
+			@EQUIPO_RIVAL = ISNULL(PARTIDO_.X.value('EquipoRival[1]', 'INT'), 0),
+			@PARTIDO_DESC = ISNULL(PARTIDO_.X.value('PartidoDescripcion[1]', 'VARCHAR(100)'), '')
+			
+			FROM @DATAXML.nodes('/Partido') as PARTIDO_(X)
+
+		IF @TRANSACCION = 'CREAR_PARTIDO'
+		BEGIN
+			--PRINT 'GUARADAR AGENDA'
+
+			INSERT INTO PARTIDO (CLUB_ID_LOCAL, CLUB_ID_RIVAL, PARTIDO_DESCRIPCION)
+
+			VALUES(@EQUIPO_LOCAL, @EQUIPO_RIVAL, @PARTIDO_DESC)
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				SELECT 'OK' AS ERROR, 'Partido registrado correctamente' AS RESPONSE
+			END
+		END
+
+		IF @TRANSACCION = 'ELIMINAR_AGENDA_PARTIDO'
+		BEGIN
+
+			UPDATE partido SET ESTADO = 'E' WHERE id_partido = @ID
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				SELECT 'Eliminado Correctamente' AS RESPONSE , '' AS ERROR
+			END
+		END
+
+		COMMIT
+	END TRY
+
+	BEGIN CATCH
+		ROLLBACK
+		--PRINT 'ERROR ES ' + ERROR_MESSAGE()
+		SELECT ERROR_MESSAGE() AS  RESPONSE, ERROR_LINE() AS ERROR
+	END CATCH
+
+END
+GO
+
+/**/
+CREATE OR ALTER PROCEDURE [dbo].[SP_MAESTRO_EQUIPO]
+	@TRANSACCION NVARCHAR(50) = '',
+	@DATAXML XML = NULL
+AS
+BEGIN
+	DECLARE @ID INT
+	DECLARE @NOMBRE VARCHAR(100)
+	DECLARE @DIRECTOR VARCHAR(100)
+
+	SET NOCOUNT ON
+
+	BEGIN TRANSACTION
+	BEGIN TRY
+		
+		SELECT @ID = ISNULL(EQUIPO.X.value('Id[1]', 'INT'), 0),
+			@NOMBRE = ISNULL(EQUIPO.X.value('Nombre[1]', 'VARCHAR(500)'), ''),
+			@DIRECTOR = ISNULL(EQUIPO.X.value('Director[1]', 'VARCHAR(500)'), '')
+			
+			FROM @DATAXML.nodes('/Equipo') as EQUIPO(X)
+
+		IF @TRANSACCION = 'CREAR_EQUIPO'
+		BEGIN
+			--PRINT 'GUARADAR AGENDA'
+
+			INSERT INTO CLUB (NOMBRE, DIRECTOR, CREATE_AT, estado)
+			VALUES(@NOMBRE, @DIRECTOR, GETDATE(), 'A')
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				SELECT 'OK' AS ERROR, 'Equipo registrado correctamente' AS RESPONSE
+			END
+		END
+
+		IF @TRANSACCION = 'ELIMINAR_EQUIPO'
+		BEGIN
+
+			UPDATE CLUB SET ESTADO = 'E', delete_at = GETDATE() WHERE ID_CLUB = @ID
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				SELECT 'Eliminado Correctamente' AS RESPONSE , 'OK' AS ERROR
+			END
+		END
+
+		IF @TRANSACCION = 'ACTUALIZAR_EQUIPO'
+		BEGIN
+
+			UPDATE CLUB SET 
+			nombre = @NOMBRE,
+			director = @DIRECTOR,
+			updated_at = GETDATE()
+			WHERE id_club = @ID
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				SELECT 'Equipo actualizado correctamente' AS RESPONSE, 'OK' AS ERROR
+			END	
+			ELSE
+			BEGIN
+				SELECT 'ERROR, EN TRANSACCION ACTUALIZAR EQUIPO CON ID ' + CAST(@ID AS VARCHAR(5)) AS RESPONSE , 'ERROR' AS ERROR
+			END
+		END
+
+
+		COMMIT
+	END TRY
+
+	BEGIN CATCH
+		ROLLBACK
+		--PRINT 'ERROR ES ' + ERROR_MESSAGE()
+		SELECT ERROR_MESSAGE() AS  RESPONSE, ERROR_LINE() AS ERROR
+	END CATCH
+
+END
+GO
+
+/**/
+CREATE OR ALTER  PROCEDURE [dbo].[SP_CONSULTAR_EQUIPO]
+	@TRANSACCION VARCHAR(100) = '',
+	@DATAXML XML = NULL
+AS
+BEGIN
+	
+	DECLARE @ID AS INT
+
+	IF @TRANSACCION = ''
+	BEGIN
+		SET @TRANSACCION = 'CONSULTAR_ALL_EQUIPOS'
+	END
+
+	SELECT @ID = ISNULL(Equipo.X.value('Id[1]','INT'), 0) FROM @DATAXML.nodes('/ActaPartido') as Equipo(X)
+
+	BEGIN TRY
+
+		IF UPPER(@TRANSACCION) = 'CONSULTAR_ALL_EQUIPOS'
+		BEGIN
+			SELECT * from club where estado <> 'E'
+
+			SELECT 'OK' AS ERROR
+
+		END
+
+		IF UPPER(@TRANSACCION) = 'CONSULTA_ACTA_EQUIPO'
+		BEGIN
+			
+			SELECT * FROM CLUB WHERE id_club = @ID
+
+			SELECT 'OK' AS ERROR
+		END
+
+	END TRY
+
+	BEGIN CATCH
+		--SELECT 'ERROR EN CONSULTA'
+		SELECT ERROR_MESSAGE() AS ERROR
+	END CATCH
+END
+GO
+
+/**/
+CREATE OR ALTER PROCEDURE [dbo].[SP_REGISTER_USER]
+	@TRANSACCION VARCHAR(50) = NULL,
+	@DATAXML XML = NULL
+AS
+BEGIN
+
+	DECLARE @USUARIO VARCHAR(50)
+	DECLARE @NOMBRE VARCHAR(100)
+	DECLARE @APELLIDO VARCHAR(100)
+	DECLARE @CONTRASENIA VARCHAR(100)
+
+	BEGIN TRANSACTION
+
+	BEGIN TRY
+		
+		SELECT @USUARIO = USUARIO.X.value('Usuario[1]', 'VARCHAR(50)'),
+		@CONTRASENIA = USUARIO.X.value('Contrasenia[1]', 'VARCHAR(50)'),
+		@NOMBRE = ISNULL(USUARIO.X.value('Nombres[1]', 'VARCHAR(100)'), ''),
+		@APELLIDO = ISNULL(USUARIO.X.value('Apellidos[1]', 'VARCHAR(100)'),'')
+		FROM @DATAXML.nodes('/User') AS USUARIO(X)
+	
+		IF @TRANSACCION = 'REGISTRAR_USUARIO'
+		BEGIN
+		
+			INSERT INTO USUARIO (NOMBRE, APELLIDO, NOMBRE_USUARIO, CONTRASENIA, CREATE_AT, ESTADO , ROL_ID_ROL)
+			VALUES (@NOMBRE, @APELLIDO, @USUARIO, @CONTRASENIA, GETDATE() , 'A', 1)
+
+			IF @@ROWCOUNT > 0
+			BEGIN
+				SELECT 'USUARIO REGISTRADO CORRECTAMENTE' AS RESPONSE, 'OK' AS ERROR
+			END
+			ELSE
+			BEGIN
+				SELECT 'ERROR EN REGISTRO DE USUARIO: ' + CAST(@USUARIO AS VARCHAR) AS RESPONSE
+				IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION
+			END
+
+		END
+		
+		PRINT 'COMITEANDO'
+
+		IF @@TRANCOUNT > 0 COMMIT TRANSACTION
+	END TRY
+
+	BEGIN CATCH
+		ROLLBACK TRANSACTION
+		SELECT ERROR_MESSAGE() AS ERROR, 'Error en procedimiento' as RESPONSE
+		
+	END CATCH
+
+END
+GO
+
+/**/
+CREATE or ALTER PROCEDURE [dbo].[SP_LOGIN]
+	@TRANSACCION VARCHAR(100),
+	@DATAXML XML
+AS
+BEGIN
+
+	DECLARE @USUARIO VARCHAR(50)
+	DECLARE @CONTRASENIA VARCHAR(50)
+
+	SELECT @USUARIO = USUARIO.X.value('Usuario[1]', 'VARCHAR(50)'),
+	@CONTRASENIA = USUARIO.X.value('Contrasenia[1]', 'VARCHAR(50)')
+	FROM @DATAXML.nodes('/User') AS USUARIO(X)
+
+	IF @TRANSACCION = 'INICIAR_SESION'
+	BEGIN
+		SELECT * FROM USUARIO WHERE NOMBRE_USUARIO = @USUARIO AND CONTRASENIA = @CONTRASENIA AND ESTADO <> 'E'
+
+		SELECT '' RESPONSE, 'OK' AS ERROR
+	END
+
+
+END
+
+SELECT * FROM PARTIDO

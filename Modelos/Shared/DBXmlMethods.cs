@@ -22,11 +22,11 @@ namespace Modelos.Shared
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return null;
+                return resultado;
             }
         }
 
-        public static async Task<DataSet> EjecutaBase(string nombreProcedimiento, string cadenaConexion, string transaccion, string? dataXML = null)
+        public static async Task<DataSet> EjecutaBase(string nombreProcedimiento, string cadenaConexion, string transaccion, string? dataXML = null, string? filtro = null)
         {
             DataSet dsResultado = new DataSet();
             try
@@ -40,6 +40,7 @@ namespace Modelos.Shared
                 cmd.CommandTimeout = 120;
                 cmd.Parameters.Add("@Transaccion", SqlDbType.VarChar).Value = transaccion;
                 cmd.Parameters.Add("@dataXml", SqlDbType.Xml).Value = dataXML?.ToString();
+                //cmd.Parameters.Add("@FILTRO", SqlDbType.Xml).Value = filtro!;
                 await cnn.OpenAsync().ConfigureAwait(false);
                 adt = new SqlDataAdapter(cmd);
                 adt.Fill(dsResultado);

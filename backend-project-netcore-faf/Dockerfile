@@ -8,6 +8,7 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["backend-project-netcore-faf/backend-project-netcore-faf.csproj", "backend-project-netcore-faf/"]
+COPY ["Modelos/Modelos.csproj", "Modelos/"]
 RUN dotnet restore "backend-project-netcore-faf/backend-project-netcore-faf.csproj"
 COPY . .
 WORKDIR "/src/backend-project-netcore-faf"
