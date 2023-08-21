@@ -139,6 +139,3 @@ BEGIN
 
 END
 GO
-
-
-Select * From arbitro

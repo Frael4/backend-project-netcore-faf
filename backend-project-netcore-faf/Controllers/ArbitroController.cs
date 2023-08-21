@@ -13,7 +13,7 @@ namespace backend_project_netcore_faf.Controllers
 
         public ArbitroController(IConfiguration configuration)
         {
-            string connection = configuration.GetConnectionString("DefaultConnection1");
+            string connection = configuration.GetConnectionString("DefaultConnection");
             arbitroRepository = new ArbitroRepository(connection);
         }
 
