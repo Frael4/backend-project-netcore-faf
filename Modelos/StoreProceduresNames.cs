@@ -16,5 +16,8 @@ namespace Modelos
 
         public readonly static string EQ_SP_CONS = "SP_CONSULTAR_EQUIPO";
         public readonly static string EQ_SP_MANT = "SP_MAESTRO_EQUIPO";
+
+        public readonly static string AB_SP_CONS = "SP_CONSULTAR_ARBITRO";
+        public readonly static string AB_SP_MANT = "SP_MAESTRO_ARBITRO";
     }
 }

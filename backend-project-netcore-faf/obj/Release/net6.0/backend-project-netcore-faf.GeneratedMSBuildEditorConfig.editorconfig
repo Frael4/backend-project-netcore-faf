@@ -9,17 +9,9 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = backend_project_netcore_faf
 build_property.RootNamespace = backend_project_netcore_faf
-<<<<<<< HEAD
-build_property.ProjectDir = C:\Users\josue\source\repos\backend-project-netcore-faf\backend-project-netcore-faf\
-build_property.RazorLangVersion = 6.0
-build_property.SupportLocalizedComponentNames = 
-build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = C:\Users\josue\source\repos\backend-project-netcore-faf\backend-project-netcore-faf
-=======
 build_property.ProjectDir = C:\Users\Frael\Documents\Visual Studio 2022\ProjectsVS2022C\backend-project-netcore-faf\backend-project-netcore-faf\
 build_property.RazorLangVersion = 6.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
 build_property.MSBuildProjectDirectory = C:\Users\Frael\Documents\Visual Studio 2022\ProjectsVS2022C\backend-project-netcore-faf\backend-project-netcore-faf
->>>>>>> fe2114e80f807a800e7d1d7cef57de2b296e4bb9
 build_property._RazorSourceGeneratorDebug = 
