@@ -1,7 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Modelos;
 using Modelos.Excepciones;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using Modelos.repo;
+using System.Security.Claims;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace backend_project_netcore_faf.Controllers
 {
@@ -10,9 +15,11 @@ namespace backend_project_netcore_faf.Controllers
     public class UserController : ControllerBase
     {
         private readonly UserRepository userRepository;
+        private readonly IConfiguration _configuration;
 
         public UserController(IConfiguration configuration)
         {
+            _configuration = configuration;
             string connection = configuration.GetConnectionString("DefaultConnection");
             userRepository = new UserRepository(connection);
         }
@@ -28,7 +35,8 @@ namespace backend_project_netcore_faf.Controllers
             if( user == null){
                 return NotFound("Usuario no encontrado");
             }
-            return Ok(user);
+
+            return Ok(JsonConvert.SerializeObject(CreateToken(user)));
         }
 
         [Route("[action]")]
@@ -49,5 +57,33 @@ namespace backend_project_netcore_faf.Controllers
             }
 
         }
+
+        private string CreateToken(User usuario)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString()),
+                new Claim(ClaimTypes.Name, usuario.Nombres!)
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value));
+
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature); /**/
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                SigningCredentials = creds,
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddDays(1)
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            /* Devolvemos el token */
+            return tokenHandler.WriteToken(token);
+        }
     }
+
 }
+
